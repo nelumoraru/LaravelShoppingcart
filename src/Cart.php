@@ -646,7 +646,7 @@ class Cart
         $this->getConnection()->table($this->getTableName())->insert([
             'identifier' => $identifier,
             'instance'   => $instance,
-            'content'    => serialize($content),
+            'content'    => base64_encode(serialize($content)),
             'created_at' => $this->createdAt ?: Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -676,7 +676,7 @@ class Cart
         $stored = $this->getConnection()->table($this->getTableName())
             ->where(['identifier'=> $identifier, 'instance' => $currentInstance])->first();
 
-        $storedContent = unserialize(data_get($stored, 'content'));
+        $storedContent = unserialize(base64_decode(data_get($stored, 'content')));
 
         $this->instance(data_get($stored, 'instance'));
 
