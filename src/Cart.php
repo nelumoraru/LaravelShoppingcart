@@ -724,6 +724,17 @@ class Cart
         return false;
     }
 
+    public function checkExists($identifier)
+    {
+        if ($identifier instanceof InstanceIdentifier) {
+            $identifier = $identifier->getInstanceIdentifier();
+        }
+
+        $currentInstance = $this->currentInstance();
+
+       return $this->storedCartInstanceWithIdentifierExists($currentInstance, $identifier);
+    }
+
     /**
      * Erase the cart with the given identifier.
      *
