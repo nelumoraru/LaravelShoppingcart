@@ -639,13 +639,15 @@ class Cart
 
         $instance = $this->currentInstance();
 
-        if ($this->storedCartInstanceWithIdentifierExists($instance, $identifier)) {
-            throw new CartAlreadyStoredException("A cart with identifier {$identifier} was already stored.");
-        }
+        // if ($this->storedCartInstanceWithIdentifierExists($instance, $identifier)) {
+        //     throw new CartAlreadyStoredException("A cart with identifier {$identifier} was already stored.");
+        // }
 
-        $this->getConnection()->table($this->getTableName())->insert([
+        $this->getConnection()->table($this->getTableName())->updateOrInsert(
+        [
             'identifier' => $identifier,
             'instance'   => $instance,
+        ],[
             'content'    => base64_encode(serialize($content)),
             'created_at' => $this->createdAt ?: Carbon::now(),
             'updated_at' => Carbon::now(),
@@ -696,6 +698,30 @@ class Cart
         $this->updatedAt = Carbon::parse(data_get($stored, 'updated_at'));
 
         // $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
+    }
+
+    public function checkEmpty($identifier)
+    {
+        if ($identifier instanceof InstanceIdentifier) {
+            $identifier = $identifier->getInstanceIdentifier();
+        }
+
+        $currentInstance = $this->currentInstance();
+
+        if (!$this->storedCartInstanceWithIdentifierExists($currentInstance, $identifier)) {
+            return true;
+        }
+
+        $stored = $this->getConnection()->table($this->getTableName())
+            ->where(['identifier'=> $identifier, 'instance' => $currentInstance])->first();
+
+        $storedContent = unserialize(base64_decode(data_get($stored, 'content')));
+
+        if($storedContent->isEmpty()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
