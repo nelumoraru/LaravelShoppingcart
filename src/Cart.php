@@ -689,8 +689,7 @@ class Cart
         }
 
         $this->events->dispatch('cart.restored');
-        
-        $this->session->forget($this->instance);
+
         $this->session->put($this->instance, $content);
 
         $this->instance($currentInstance);
@@ -701,7 +700,13 @@ class Cart
         // $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
     }
 
-    public function checkEmpty($identifier)
+    /**
+     * Check if cart exists in database
+     *
+     * @param $identifier
+     * @return bool
+     */
+    public function exists($identifier)
     {
         if ($identifier instanceof InstanceIdentifier) {
             $identifier = $identifier->getInstanceIdentifier();
@@ -709,16 +714,7 @@ class Cart
 
         $currentInstance = $this->currentInstance();
 
-        if (!$this->storedCartInstanceWithIdentifierExists($currentInstance, $identifier)) {
-            return true;
-        }
-
-        $stored = $this->getConnection()->table($this->getTableName())
-            ->where(['identifier'=> $identifier, 'instance' => $currentInstance])->first();
-
-        $storedContent = unserialize(base64_decode(data_get($stored, 'content')));
-
-        if($storedContent->isEmpty()) {
+        if ($this->storedCartInstanceWithIdentifierExists($currentInstance, $identifier)) {
             return true;
         }
 
