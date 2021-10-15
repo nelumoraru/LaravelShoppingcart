@@ -639,15 +639,14 @@ class Cart
 
         $instance = $this->currentInstance();
 
-        // if ($this->storedCartInstanceWithIdentifierExists($instance, $identifier)) {
-        //     throw new CartAlreadyStoredException("A cart with identifier {$identifier} was already stored.");
-        // }
+        if ($this->storedCartInstanceWithIdentifierExists($instance, $identifier)) {
+            throw new CartAlreadyStoredException("A cart with identifier {$identifier} was already stored.");
+        }
 
-        $this->getConnection()->table($this->getTableName())->updateOrInsert(
+        $this->getConnection()->table($this->getTableName())->insert(
         [
             'identifier' => $identifier,
             'instance'   => $instance,
-        ],[
             'content'    => base64_encode(serialize($content)),
             'created_at' => $this->createdAt ?: Carbon::now(),
             'updated_at' => Carbon::now(),
