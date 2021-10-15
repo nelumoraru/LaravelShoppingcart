@@ -700,7 +700,7 @@ class Cart
         // $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
     }
 
-    public function checkExists($identifier)
+    public function checkEmpty($identifier)
     {
         if ($identifier instanceof InstanceIdentifier) {
             $identifier = $identifier->getInstanceIdentifier();
@@ -708,7 +708,20 @@ class Cart
 
         $currentInstance = $this->currentInstance();
 
-       return $this->storedCartInstanceWithIdentifierExists($currentInstance, $identifier);
+        if (!$this->storedCartInstanceWithIdentifierExists($currentInstance, $identifier)) {
+            return true;
+        }
+
+        $stored = $this->getConnection()->table($this->getTableName())
+            ->where(['identifier'=> $identifier, 'instance' => $currentInstance])->first();
+
+        $storedContent = unserialize(base64_decode(data_get($stored, 'content')));
+
+        if($storedContent->isEmpty()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
