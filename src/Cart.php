@@ -690,7 +690,6 @@ class Cart
 
         $this->events->dispatch('cart.restored');
         
-        $this->session->forget($this->instance);
         $this->session->put($this->instance, $content);
 
         $this->instance($currentInstance);
