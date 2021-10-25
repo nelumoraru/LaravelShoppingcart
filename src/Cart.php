@@ -151,7 +151,7 @@ class Cart
      *
      * @return \Gloudemans\Shoppingcart\CartItem The CartItem
      */
-    public function addCartItem($item, $keepDiscount = false, $keepTax = false, $dispatchEvent = true)
+    public function addCartItem($item, $keepQuantity = false, $keepDiscount = false, $keepTax = false, $dispatchEvent = true)
     {
         if (!$keepDiscount) {
             $item->setDiscountRate($this->discount);
@@ -163,7 +163,7 @@ class Cart
 
         $content = $this->getContent();
 
-        if ($content->has($item->rowId)) {
+        if ($content->has($item->rowId) && !$keepQuantity) {
             $item->qty += $content->get($item->rowId)->qty;
         }
 
@@ -755,7 +755,7 @@ class Cart
      *
      * @return bool
      */
-    public function merge($identifier, $keepDiscount = false, $keepTax = false, $dispatchAdd = true, $instance = self::DEFAULT_INSTANCE)
+    public function merge($identifier, $keepQuantity = false, $keepDiscount = false, $keepTax = false, $dispatchAdd = true, $instance = self::DEFAULT_INSTANCE)
     {
         if (!$this->storedCartInstanceWithIdentifierExists($instance, $identifier)) {
             return false;
@@ -767,7 +767,7 @@ class Cart
         $storedContent = unserialize(base64_decode($stored->content));
 
         foreach ($storedContent as $cartItem) {
-            $this->addCartItem($cartItem, $keepDiscount, $keepTax, $dispatchAdd);
+            $this->addCartItem($cartItem, $keepQuantity, $keepDiscount, $keepTax, $dispatchAdd);
         }
 
         $this->events->dispatch('cart.merged');
