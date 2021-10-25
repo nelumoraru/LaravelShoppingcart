@@ -764,7 +764,7 @@ class Cart
         $stored = $this->getConnection()->table($this->getTableName())
             ->where(['identifier'=> $identifier, 'instance'=> $instance])->first();
 
-        $storedContent = unserialize($stored->content);
+        $storedContent = unserialize(base64_decode($stored->content));
 
         foreach ($storedContent as $cartItem) {
             $this->addCartItem($cartItem, $keepDiscount, $keepTax, $dispatchAdd);
