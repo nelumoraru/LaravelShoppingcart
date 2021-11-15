@@ -651,7 +651,7 @@ class Cart
             'content'    => base64_encode(serialize($content)),
             'created_at' => $this->createdAt ?: Carbon::now(),
             'updated_at' => Carbon::now(),
-        ]);
+        ])->lock(true);
 
         $this->events->dispatch('cart.stored');
     }
