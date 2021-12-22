@@ -141,6 +141,14 @@ class Cart
         return $this->addCartItem($cartItem);
     }
 
+    public function addWithGift($id, $giftId)
+    {
+        $product = $this->add($id);
+        $this->add($giftId, 'gift', 1, 1);
+
+        return $product;
+    }
+
     /**
      * Add an item to the cart.
      *
