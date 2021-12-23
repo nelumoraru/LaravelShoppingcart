@@ -272,7 +272,7 @@ class Cart
         $content = $this->getContent();
 
         if (!$content->has($rowId)) {
-            return null;
+            throw new InvalidRowIDException("The cart does not contain rowId {$rowId}.");
         }
 
         return $content->get($rowId);
