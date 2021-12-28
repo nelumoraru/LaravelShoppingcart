@@ -190,7 +190,7 @@ class Cart
      *
      * @return \Gloudemans\Shoppingcart\CartItem
      */
-    public function update($rowId, $qty)
+    public function update($rowId, $qty, $options = null)
     {
         $cartItem = $this->get($rowId);
 
@@ -212,6 +212,10 @@ class Cart
             if ($content->has($cartItem->rowId)) {
                 $existingCartItem = $this->get($cartItem->rowId);
                 $cartItem->setQuantity($existingCartItem->qty + $cartItem->qty);
+
+                if(!is_null($options)) {
+                    $cartItem->setOptions($options);
+                }
             }
         }
 

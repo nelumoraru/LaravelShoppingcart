@@ -297,6 +297,11 @@ class CartItem implements Arrayable, Jsonable
         $this->qty = $qty;
     }
 
+    public function setOptions($options)
+    {
+        $this->options = array_merge($this->options, $options);
+    }
+
     /**
      * Update the cart item from a Buyable.
      *
