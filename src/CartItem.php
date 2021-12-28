@@ -299,6 +299,11 @@ class CartItem implements Arrayable, Jsonable
 
     public function setOptions($options)
     {
+        $this->options = new CartItemOptions($options);
+    }
+
+    public function updateOptions($options)
+    {
         $this->options = new CartItemOptions(array_merge($this->options->toArray(), $options));
     }
 
