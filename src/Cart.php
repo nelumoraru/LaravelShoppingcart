@@ -202,6 +202,10 @@ class Cart
             $cartItem->qty = $qty;
         }
 
+        if(!is_null($options)) {
+            $cartItem->setOptions($options);
+        }
+
         $content = $this->getContent();
 
         if ($rowId !== $cartItem->rowId) {
@@ -212,10 +216,6 @@ class Cart
             if ($content->has($cartItem->rowId)) {
                 $existingCartItem = $this->get($cartItem->rowId);
                 $cartItem->setQuantity($existingCartItem->qty + $cartItem->qty);
-
-                if(!is_null($options)) {
-                    $cartItem->setOptions($options);
-                }
             }
         }
 
