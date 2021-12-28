@@ -297,11 +297,19 @@ class CartItem implements Arrayable, Jsonable
         $this->qty = $qty;
     }
 
+    /**
+     * @param $options
+     * @return void
+     */
     public function setOptions($options)
     {
         $this->options = new CartItemOptions($options);
     }
 
+    /**
+     * @param $options
+     * @return void
+     */
     public function updateOptions($options)
     {
         $this->options = new CartItemOptions(array_merge($this->options->toArray(), $options));
