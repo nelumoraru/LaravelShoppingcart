@@ -202,7 +202,7 @@ class Cart
             $cartItem->qty = $qty;
         }
 
-        if(!empty($options) && !$update) {
+        if(!empty($options) && $update) {
             $cartItem->setOptions($options);
         }else {
             $cartItem->updateOptions($options);
