@@ -19,7 +19,7 @@ class DefaultCalculator implements Calculator
             case 'priceTax':
                 return round($cartItem->priceTarget + $cartItem->tax, $decimals);
             case 'discountTotal':
-                return round($cartItem->discount * $cartItem->qty, $decimals);
+                return round(floor($cartItem->discount) * $cartItem->qty, $decimals);
             case 'priceTotal':
                 return round($cartItem->price * $cartItem->qty, $decimals);
             case 'subtotal':
