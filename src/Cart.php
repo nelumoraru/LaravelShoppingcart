@@ -83,6 +83,7 @@ class Cart
         $this->taxRate = config('cart.tax');
 
         $this->instance(self::DEFAULT_INSTANCE);
+        $this->discount = $this->session->get($this->instance)['discount'] ?? 0;
     }
 
     /**
@@ -153,9 +154,9 @@ class Cart
      */
     public function addCartItem($item, $keepQuantity = false, $keepDiscount = false, $keepTax = false, $dispatchEvent = true)
     {
-        if (!$keepDiscount) {
-            $item->setDiscountRate($this->discount);
-        }
+//        if (!$keepDiscount) {
+//            $item->setDiscountRate($this->discount);
+//        }
 
         if (!$keepTax) {
             $item->setTaxRate($this->taxRate);
@@ -173,7 +174,7 @@ class Cart
             $this->events->dispatch('cart.adding', $item);
         }
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
 
         if ($dispatchEvent) {
             $this->events->dispatch('cart.added', $item);
@@ -237,7 +238,7 @@ class Cart
 
         $this->events->dispatch('cart.updating', $cartItem);
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
 
         $this->events->dispatch('cart.updated', $cartItem);
 
@@ -261,7 +262,7 @@ class Cart
 
         $this->events->dispatch('cart.removing', $cartItem);
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
 
         $this->events->dispatch('cart.removed', $cartItem);
     }
@@ -301,11 +302,11 @@ class Cart
      */
     public function content()
     {
-        if (is_null($this->session->get($this->instance))) {
+        if (is_null($this->session->get($this->instance)['content'] ?? null)) {
             return new Collection([]);
         }
 
-        return $this->session->get($this->instance);
+        return $this->session->get($this->instance)['content'];
     }
 
     /**
@@ -336,9 +337,11 @@ class Cart
      */
     public function totalFloat()
     {
-        return $this->getContent()->reduce(function ($total, CartItem $cartItem) {
+        $total = $this->getContent()->reduce(function ($total, CartItem $cartItem) {
             return $total + $cartItem->total;
         }, 0);
+
+        return $total - ($total * $this->discount / 100);
     }
 
     /**
@@ -545,7 +548,7 @@ class Cart
 
         $content->put($cartItem->rowId, $cartItem);
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
     }
 
     /**
@@ -566,7 +569,7 @@ class Cart
 
         $content->put($cartItem->rowId, $cartItem);
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
     }
 
     /**
@@ -605,7 +608,7 @@ class Cart
 
         $content->put($cartItem->rowId, $cartItem);
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
     }
 
     /**
@@ -616,16 +619,51 @@ class Cart
      *
      * @return void
      */
-    public function setGlobalDiscount($discount)
+    public function setGlobalDiscount($discount, $toContent = true)
     {
-        $this->discount = $discount;
-
-        $content = $this->getContent();
-        if ($content && $content->count()) {
-            $content->each(function ($item, $key) {
-                $item->setDiscountRate($this->discount);
-            });
+        if($toContent) {
+            $content = $this->getContent();
+            if ($content && $content->count()) {
+                $content->each(function ($item, $key) {
+                    $item->setDiscountRate($this->discount);
+                });
+            }
+        }else {
+            $this->discount = $discount;
+            $this->session->put($this->instance, $this->getFullContent());
         }
+    }
+
+    /**
+     * @return float|int|mixed
+     */
+    public function getGlobalDiscount()
+    {
+        return $this->discount;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function globalDiscount()
+    {
+        return $this->discount * $this->subtotal() / 100;
+    }
+
+    /**
+     * @param $content
+     * @return Collection
+     */
+    public function getFullContent($content = null)
+    {
+        if (!$content) {
+            $content = $this->getContent();
+        }
+
+        $fullContent = new Collection(['content' => $content]);
+        $fullContent['discount'] = $this->discount;
+
+        return $fullContent;
     }
 
     /**
@@ -637,7 +675,7 @@ class Cart
      */
     public function store($identifier)
     {
-        $content = $this->getContent();
+        $content = $this->getFullContent();
 
         if ($identifier instanceof InstanceIdentifier) {
             $identifier = $identifier->getInstanceIdentifier();
@@ -650,10 +688,10 @@ class Cart
         // }
 
         $this->getConnection()->table($this->getTableName())->updateOrInsert(
-        [
-            'identifier' => $identifier,
-            'instance'   => $instance,
-        ],[
+            [
+                'identifier' => $identifier,
+                'instance'   => $instance,
+            ],[
             'content'    => base64_encode(serialize($content)),
             'created_at' => $this->createdAt ?: Carbon::now(),
             'updated_at' => Carbon::now(),
@@ -690,13 +728,14 @@ class Cart
 
         $content = $this->getContent();
 
-        foreach ($storedContent as $cartItem) {
+        foreach ($storedContent['content'] ?? [] as $cartItem) {
             $content->put($cartItem->rowId, $cartItem);
         }
+        $this->discount = $storedContent['discount'] ?? 0;
 
         $this->events->dispatch('cart.restored');
 
-        $this->session->put($this->instance, $content);
+        $this->session->put($this->instance, $this->getFullContent($content));
 
         $this->instance($currentInstance);
 
@@ -772,9 +811,10 @@ class Cart
 
         $storedContent = unserialize(base64_decode($stored->content));
 
-        foreach ($storedContent as $cartItem) {
+        foreach ($storedContent['content'] ?? [] as $cartItem) {
             $this->addCartItem($cartItem, $keepQuantity, $keepDiscount, $keepTax, $dispatchAdd);
         }
+        $this->discount = $storedContent['discount'] ?? 0;
 
         $this->events->dispatch('cart.merged');
 
@@ -810,7 +850,7 @@ class Cart
     protected function getContent()
     {
         if ($this->session->has($this->instance)) {
-            return $this->session->get($this->instance);
+            return $this->session->get($this->instance)['content'];
         }
 
         return new Collection();
