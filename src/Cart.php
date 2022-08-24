@@ -624,8 +624,8 @@ class Cart
         if($toContent) {
             $content = $this->getContent();
             if ($content && $content->count()) {
-                $content->each(function ($item, $key) {
-                    $item->setDiscountRate($this->discount);
+                $content->each(function ($item, $key) use($discount) {
+                    $item->setDiscountRate($discount);
                 });
             }
         }else {
